@@ -52,7 +52,7 @@ def makeGraph(Cres):
 
 # load pickled data files previously made by the file readMonolingEmbeddings2
 def loadPickledFiles(size1,size2,size3, lang):
-	print "loading pickle files"
+	print("loading pickle files")
 	X = pickle.load(open("pickle/X" + str(size1) + "-" + str(size2) + "-" + 
 								str(size3) + lang + ".pickle", "rb"))
 	crossValX = pickle.load(open("pickle/crossValX"+ str(size1) + "-" + 
@@ -71,7 +71,7 @@ def loadPickledFiles(size1,size2,size3, lang):
 
 # when data is read from readMonolingEmbeddings2 the first time, save them in a pickle
 def createPickledFiles(X, crossValX, X2, XLabels, crossValLabels, X2Labels, testWords, lang):
-	print "creating pickle files"
+	print("creating pickle files")
 	pickle.dump(X, open( "pickle/X" + str(size1) + "-" + str(size2) + "-" + 
 							str(size3) + lang + ".pickle", "wb" ) )
 	pickle.dump(crossValX, open( "pickle/crossValX"+ str(size1) + "-" + 
@@ -110,19 +110,19 @@ if __name__ == "__main__":
 	try:
 		[X, crossValX, X2, XLabels, crossValLabels, X2Labels, trainWords, testWords] = loadPickledFiles(size1,size2,size3, lang)
 	except (OSError, IOError) as e:
-		print "no pickle files available"
+		print("no pickle files available")
 		[X, crossValX, X2, XLabels, crossValLabels, X2Labels, trainWords, testWords] = getData(size1,size2,size3,lang,feature)
 		createPickledFiles(X, crossValX, X2, XLabels, crossValLabels, X2Labels, testWords, testWords, lang)
-	print str(time.time() - start) + "seconds"
+	print(str(time.time() - start) + "seconds")
 	# the values for C which will be tested in cross validation
 	#Clist = [1,10,30,50]
 	Clist = [0.0001] #,1]
 	CRes = [Clist,[],[]]
 
 	bestC = crossValidate(Clist, CRes)
-	print str(time.time() - start) + "seconds"
-	print "bestC: " + str(bestC)
+	print(str(time.time() - start) + "seconds")
+	print("bestC: " + str(bestC))
 	[bestLogreg, trainAcc] = train(bestC, 100,1e-4, X, XLabels) 
 	testAcc = test(bestLogreg, X2, X2Labels, testWords)
-	print "testset accuracy: " + testAcc
-	print str(time.time() - start) + "seconds"
+	print("testset accuracy: " + testAcc)
+	print(str(time.time() - start) + "seconds")
