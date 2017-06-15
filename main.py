@@ -9,18 +9,18 @@ import data
 
 parser = argparse.ArgumentParser(description='run prediction exps')
 
-parser.add_argument('--train_vectors', required=True, default=None, type=str,
+parser.add_argument('--train_vectors', default='train_vecs', type=str,
                     help='file containing the training word vectors (types or tokens)')
-parser.add_argument('--valid_vectors', required=True, default=None, type=str,
+parser.add_argument('--valid_vectors', default='valid_vecs', type=str,
                     help='file containing the valid word vectors (types or tokens)')
-parser.add_argument('--test_vectors', required=True, default=None, type=str,
+parser.add_argument('--test_vectors', default='test_vecs', type=str,
                     help='file containing the test word vectors (types or tokens)')
 parser.add_argument('--n_vectors', default=-1, type=int,
                     help='maximum nb of vectors to include in each train/valid/test set')
 parser.add_argument('--mlp_hid', default=100, type=int,
                     help='hidden layer size for MLP classifier')
 
-parser.add_argument('--label_dict', required=True, default=None, type=str,
+parser.add_argument('--label_dict', default='label_dict', type=str,
                     help='file containing the dictionary of word labels')
 parser.add_argument('--classifier', default='LR', type=str,
                     help='classifier to use: LR or MLP')
