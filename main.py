@@ -16,7 +16,8 @@ parser.add_argument('--valid_vectors', default='valid_vecs', type=str,
 parser.add_argument('--test_vectors', default='test_vecs', type=str,
                     help='file containing the test word vectors (types or tokens)')
 parser.add_argument('--n_vectors', default=-1, type=int,
-                    help='maximum nb of vectors to include in each train/valid/test set')
+                    help='maximum nb of vectors to include in the training set')
+
 parser.add_argument('--mlp_hid', default=100, type=int,
                     help='hidden layer size for MLP classifier')
 

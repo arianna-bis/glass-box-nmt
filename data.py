@@ -90,10 +90,10 @@ class Data(object):
         dict = {}
         n = 0
         for line in f:
-            dict[line] = 1
-            n = 0
-            print("read " + str(n) + " dict lines from " + filename)
-            print("dict contains " + str(len(dict)) + " entries")
+            dict[line.rstrip()] = 1
+            n += 1
+        print("read " + str(n) + " dict lines from " + filename)
+        print("dict contains " + str(len(dict)) + " entries")
         return dict
 
     #def get_word_labels(words,label_dict):
