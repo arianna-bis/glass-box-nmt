@@ -3,6 +3,7 @@ import numpy as np
 import sklearn
 from sklearn import neural_network
 from sklearn import linear_model
+from sklearn import dummy
 from sklearn.metrics import accuracy_score
 import data
 
@@ -44,6 +45,14 @@ config = parser.parse_args()
 print("config:")
 print(config)
 
+def baseline(config, datasets):
+    #model = dummy.DummyClassifier(strategy='stratified')
+    model = dummy.DummyClassifier(strategy='most_frequent')
+    model.fit(datasets.train_vectors, datasets.train_labels)
+    test_acc = model.score(datasets.train_vectors, datasets.train_labels)
+    print("baseline(most_freq) test_acc: %.4f" % (test_acc))
+
+
 def train(config, datasets):
     model = None
     print("using classifier: " + config.classifier)
@@ -54,28 +63,27 @@ def train(config, datasets):
                                              activation='relu',solver='adam')
     model.fit(datasets.train_vectors, datasets.train_labels)
     train_acc = model.score(datasets.train_vectors, datasets.train_labels)
-    print("train_acc: " + str(train_acc))
+    print("train_acc: : %.4f" % (train_acc))
     return model
 
 def test(config, datasets, classifier):
-    acc = None
+    test_acc = None
     if config.preds_file:
         f = open(config.preds_file, 'w')
         preds = classifier.predict(datasets.test_vectors)
         probs = classifier.predict_proba(datasets.test_vectors)
-        acc = accuracy_score(datasets.test_labels, preds)
+        test_acc = accuracy_score(datasets.test_labels, preds)
         for i in range(len(datasets.test_vectors)):
             #'%s %s' % ('one', 'two')
             #'%f' % (3.141592653589793,)
             prob = '%.4f' % (max(probs[i]))
             f.write(datasets.test_words[i] + "\t" + datasets.test_labels[i] + "\t" + preds[i] + "\t" + prob + "\n")
     else:
-        acc = classifier.score(datasets.test_vectors, datasets.test_labels)
-    print("test_acc: " + str(acc))
+        test_acc = classifier.score(datasets.test_vectors, datasets.test_labels)
+    print("test_acc: : %.4f" % (test_acc))
 
-
-# todo call data loader
 mydata = data.Data(config)
 
 classifier = train(config, mydata)
 test(config, mydata, classifier)
+baseline(config,mydata)
