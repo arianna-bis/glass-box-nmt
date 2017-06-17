@@ -56,6 +56,7 @@ def run_baseline(config, datasets):
     model.fit(datasets.train_vectors, datasets.train_labels)
     test_acc = model.score(datasets.train_vectors, datasets.train_labels)
     print("baseline(most_freq) test_acc: %.4f" % (test_acc))
+    return test_acc
 
 
 def train(config, datasets, alpha_value):
@@ -96,6 +97,7 @@ def test(config, datasets, classifier):
 n_folds = config.n_folds
 datasets = [None] * n_folds
 scores = [None] * n_folds
+baseline_scores = [None] * n_folds
 for i in range(n_folds):
     suff_fold = None
     if n_folds > 1:
@@ -111,12 +113,13 @@ for i in range(n_folds):
             classifiers[j], valid_accs[j] = train(config, datasets[i], config.alphas[j])
         best = np.argmax(valid_accs)
         print("best_alpha: %.4f" % (config.alphas[best]))
-        classifier = classifiers[best]
+        classifier = classifiers[int(best)]
     else:
         classifier, valid_acc = train(config, datasets[i], None)
 
     scores[i] = test(config, datasets[i], classifier)
+    baseline_scores[i] = run_baseline(config,datasets[i])
 
 print("***\navg_test_acc: %.4f\n***" % (np.mean(scores)))
+print("***\navg_baseline_test_acc: %.4f\n***" % (np.mean(baseline_scores)))
 
-run_baseline(config,datasets[i])
