@@ -78,10 +78,13 @@ def train(config, datasets, alpha_value):
     print("valid_acc: : %.4f" % (valid_acc))
     return model, valid_acc
 
-def test(config, datasets, classifier):
+def test(config, datasets, classifier, suff_fold):
     test_acc = None
     if config.preds_file:
-        f = open(config.preds_file, 'w')
+        preds_file = config.preds_file
+        if suff_fold:
+            preds_file = preds_file + suff_fold
+        f = open(preds_file, 'w')
         preds = classifier.predict(datasets.test_vectors)
         probs = classifier.predict_proba(datasets.test_vectors)
         test_acc = accuracy_score(datasets.test_labels, preds)
@@ -117,7 +120,7 @@ for i in range(n_folds):
     else:
         classifier, valid_acc = train(config, datasets[i], None)
 
-    scores[i] = test(config, datasets[i], classifier)
+    scores[i] = test(config, datasets[i], classifier, suff_fold)
     baseline_scores[i] = run_baseline(config,datasets[i])
 
 print("***\navg_test_acc: %.4f\n***" % (np.mean(scores)))
