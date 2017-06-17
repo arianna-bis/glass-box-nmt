@@ -10,33 +10,29 @@ def fopen(filename, mode='r'):
 
 class Data(object):
 
-#    def __init__(self, train_vectors, valid_vectors, test_vectors,
-#                 label_dict,
-#                 train_dict,valid_dict,test_dict):
-
-
     """Data loader."""
-    def __init__(self, config):
+    def __init__(self, config, fold_suff):
         self.label_dict = self.load_labels(config.label_dict)
 
         self.train_dict = None
         if config.train_dict:
-            self.train_dict = self.load_dict(config.train_dict)
+            self.train_dict = self.load_dict(config.train_dict, fold_suff)
         self.train_words, self.train_vectors, self.train_labels, self.train_size = self.load_vectors_and_labels(
             config.train_vectors, config.n_vectors, self.label_dict, self.train_dict)
 
         self.valid_dict = None
         if config.valid_dict:
-            self.valid_dict = self.load_dict(config.valid_dict)
+            self.valid_dict = self.load_dict(config.valid_dict, fold_suff)
         self.valid_words, self.valid_vectors, self.valid_labels, self.valid_size = self.load_vectors_and_labels(
             config.valid_vectors, config.n_vectors, self.label_dict, self.valid_dict)
 
         self.test_dict = None
         if config.test_dict:
-            self.test_dict = self.load_dict(config.test_dict)
+            self.test_dict = self.load_dict(config.test_dict, fold_suff)
         self.test_words, self.test_vectors, self.test_labels, self.test_size = self.load_vectors_and_labels(
             config.test_vectors, config.n_vectors, self.label_dict, self.test_dict)
 
+        del self.label_dict
 
     # load (at most max_vectors) word vectors from a file
     # also load the label of each word or skip the word if no label is found
@@ -85,7 +81,9 @@ class Data(object):
         return label_dict
 
     # expected format: one entry per line
-    def load_dict(self, filename):
+    def load_dict(self, filename, fold_suff):
+        if fold_suff:
+            filename = filename + fold_suff
         f = fopen(filename, 'r')
         dict = {}
         n = 0
@@ -95,8 +93,4 @@ class Data(object):
         print("read " + str(n) + " dict lines from " + filename)
         print("dict contains " + str(len(dict)) + " entries")
         return dict
-
-    #def get_word_labels(words,label_dict):
-    #    labels = []
-    #    for word in words:
 
