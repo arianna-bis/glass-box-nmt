@@ -18,17 +18,20 @@ parser.add_argument('--test_vectors', default='test_vecs', type=str,
                     help='file containing the test word vectors (types or tokens)')
 parser.add_argument('--n_vectors', default=-1, type=int,
                     help='maximum nb of vectors to include in the training set')
+parser.add_argument('--label_dict', default='label_dict', type=str,
+                    help='file containing the dictionary of word labels')
 
+parser.add_argument('--only_baseline', action='store_true',
+                    help='only compute baseline accuracy')
+
+parser.add_argument('--classifier', default='LR', type=str,
+                    help='classifier to use: LR or MLP')
 parser.add_argument('--alphas', default=None, nargs='+', type=float,
                     help='regularization parameter values to validate \
                           (corresponding to C for LR, alpha for MLP)')
 parser.add_argument('--mlp_hid', default=100, type=int,
                     help='hidden layer size for MLP classifier')
 
-parser.add_argument('--label_dict', default='label_dict', type=str,
-                    help='file containing the dictionary of word labels')
-parser.add_argument('--classifier', default='LR', type=str,
-                    help='classifier to use: LR or MLP')
 parser.add_argument('--preds_file', default=None, type=str,
                     help='file to print the predictions for the test set')
 
@@ -99,30 +102,30 @@ def test(config, datasets, classifier, suff_fold):
 
 n_folds = config.n_folds
 datasets = [None] * n_folds
-scores = [None] * n_folds
-baseline_scores = [None] * n_folds
+scores = [0] * n_folds
+baseline_scores = [0] * n_folds
 for i in range(n_folds):
+
     suff_fold = None
     if n_folds > 1:
         suff_fold = '.fold'+str(i+1)    # filename suffixes are 1-numbered
     datasets[i] = data.Data(config, suff_fold)
-
-    classifier = None
-    if config.alphas:
-        n_classifiers = len(config.alphas)
-        classifiers = [None] * n_classifiers
-        valid_accs = [None] * n_classifiers
-        for j in range(n_classifiers):
-            classifiers[j], valid_accs[j] = train(config, datasets[i], config.alphas[j])
-        best = np.argmax(valid_accs)
-        print("best_alpha: %.4f" % (config.alphas[best]))
-        classifier = classifiers[int(best)]
-    else:
-        classifier, valid_acc = train(config, datasets[i], None)
-
-    scores[i] = test(config, datasets[i], classifier, suff_fold)
     baseline_scores[i] = run_baseline(config,datasets[i])
+    if not config.only_baseline:
+        classifier = None
+        if config.alphas:
+            n_classifiers = len(config.alphas)
+            classifiers = [None] * n_classifiers
+            valid_accs = [None] * n_classifiers
+            for j in range(n_classifiers):
+                classifiers[j], valid_accs[j] = train(config, datasets[i], config.alphas[j])
+            best = np.argmax(valid_accs)
+            print("best_alpha: %.4f" % (config.alphas[best]))
+            classifier = classifiers[int(best)]
+        else:
+            classifier, valid_acc = train(config, datasets[i], None)
+        scores[i] = test(config, datasets[i], classifier, suff_fold)
 
-print("***\navg_test_acc: %.4f\n***" % (np.mean(scores)))
-print("***\navg_baseline_test_acc: %.4f\n***" % (np.mean(baseline_scores)))
+print("*** avg baseline test_acc: %.4f ***" % (np.mean(baseline_scores)))
+print("*** avg classif  test_acc: %.4f ***" % (np.mean(scores)))
 
