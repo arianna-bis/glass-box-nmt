@@ -18,12 +18,27 @@ parser.add_argument('--test_vectors', default='test_vecs', type=str,
                     help='file containing the test word vectors (types or tokens)')
 parser.add_argument('--n_vectors', default=-1, type=int,
                     help='maximum nb of vectors to include in the training set')
-parser.add_argument('--label_dict', default='label_dict', type=str,
+
+# Labels from lexicon (e.g. lexicon only containing gender features)
+parser.add_argument('--label_dict', default=None, type=str,
                     help='file containing the dictionary of word labels')
+# OR
+# Labels from tagged corpus
+# format per line: word POS lemma feats
+parser.add_argument('--train_tags', default=None, type=str,
+                    help='file containing the tags and features of the training words')
+parser.add_argument('--valid_tags', default=None, type=str,
+                    help='file containing the tags and features of the valid words')
+parser.add_argument('--test_tags', default=None, type=str,
+                    help='file containing the tags and features of the test words')
+parser.add_argument('--labels', default=['m','f'], nargs='+', type=str,
+                    help='labels (i.e. morph.features) to predict')
+
 
 parser.add_argument('--only_baseline', action='store_true',
                     help='only compute baseline accuracy')
 
+# Classifier options:
 parser.add_argument('--classifier', default='LR', type=str,
                     help='classifier to use: LR or MLP')
 parser.add_argument('--alphas', default=None, nargs='+', type=float,
@@ -32,17 +47,24 @@ parser.add_argument('--alphas', default=None, nargs='+', type=float,
 parser.add_argument('--mlp_hid', default=100, type=int,
                     help='hidden layer size for MLP classifier')
 
+# Output files:
 parser.add_argument('--preds_file', default=None, type=str,
                     help='file to print the predictions for the test set')
 
+# Data selection options:
 parser.add_argument('--train_dict', default=None, type=str,
                     help='file containing the words to filter the training data')
 parser.add_argument('--valid_dict', default=None, type=str,
                     help='file containing the words to filter the valid data')
 parser.add_argument('--test_dict', default=None, type=str,
                     help='file containing the words to filter the test data')
+parser.add_argument('--only_tags', default=None, nargs='+', type=str,
+                    help='only keep samples with the provided tags. \
+                          Tags must be provided with the {train|valid|test}_tags options')
+
+# Data folds:
 parser.add_argument('--n_folds', default=1, type=int,
-                    help='number of data folds (expecting files: \
+                    help='number of data folds (expected files: \
                         train_dict.fold1 ... train_dict.foldN \
                         valid_dict.fold1 ... valid_dict.foldN ...)')
 
