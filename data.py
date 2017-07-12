@@ -7,11 +7,13 @@ def fopen(filename, mode='r'):
         return gzip.open(filename, mode)
     return open(filename, mode)
 
-
 class Data(object):
 
     """Data loader."""
     def __init__(self, config, fold_suff):
+
+        self.unk = "<unk>"
+        self.eos = "EOS"
 
         if not config.label_dict and not config.train_tags:
             sys.exit("Labels must be provided by --label_dict or --train_tags")
@@ -81,7 +83,7 @@ class Data(object):
         for line in f:
             n_lines += 1
             line = line.rstrip()
-            if line.startswith("EOS"):
+            if line.startswith(self.eos) or line.startswith(self.unk):
                 continue
             fields = line.split()
             word = fields[0]
@@ -143,8 +145,8 @@ class Data(object):
         n = 0
         for line in f:
             line = line.rstrip()
-            if line == "EOS":
-                tokens_tags.append(["EOS","_","_","_"])
+            if line == self.eos:
+                tokens_tags.append([self.eos,"_","_","_"])
             else:
                 (word,tag,lem,all_labels) = line.split(" ", 3)
                 sel_labels = ""
