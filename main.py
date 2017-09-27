@@ -148,6 +148,6 @@ for i in range(n_folds):
             classifier, valid_acc = train(config, datasets[i], None)
         scores[i] = test(config, datasets[i], classifier, suff_fold)
 
-print("*** avg baseline test_acc: %.4f ***" % (np.mean(baseline_scores)))
-print("*** avg classif  test_acc: %.4f ***" % (np.mean(scores)))
+print("*** avg baseline test_acc: %.4f [std: %.4f] ***" % (np.mean(baseline_scores), np.std(baseline_scores)))
+print("*** avg classif  test_acc: %.4f [std: %.4f] ***" % (np.mean(scores), np.std(scores)))
 
