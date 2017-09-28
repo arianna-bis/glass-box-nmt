@@ -98,9 +98,12 @@ class Data(object):
                 # sanity check:
                 if word != tags_and_labels[n_lines-1][0]:
                     sys.exit("word mismatch at line " + str(n_lines-1) + " : " + word + "!=" + tags_and_labels[n_lines-1][0])
+                # append the tag to the word, for analysis purposes:
+                word += '__' + tags_and_labels[n_lines-1][1]
+                # filter the sample by tag, if needed:
                 if not only_tags or tags_and_labels[n_lines-1][1] in only_tags:
                     if label != "":
-                       label = tags_and_labels[n_lines-1][2]
+                        label = tags_and_labels[n_lines-1][2]
 
             if label:
                 labels.append(label)
@@ -149,11 +152,26 @@ class Data(object):
                 tokens_tags.append([self.eos,"_","_","_"])
             else:
                 (word,tag,lem,all_labels) = line.split(" ", 3)
-                sel_labels = ""
+                #sel_labels = ""
+                selected_labels = {}
+
                 for l in list(all_labels):
                     if l in self.labels:
-                        sel_labels += l
-                tokens_tags.append((word,tag,sel_labels))
+                        #sel_labels += l
+                        #assert(len(sel_labels)==1)  # make sure only one feature value per word is retained
+                        selected_labels[l] = 1
+
+                selected_labels_str = ''
+                if(len(selected_labels.keys())==1):
+                    selected_labels_str = ''.join(selected_labels.keys())
+
+                tokens_tags.append((word,tag,selected_labels_str))
+
+                #if tag == 'VER':
+                #    print('\t'.join((word,tag,selected_labels_str)))
+                #    print(''.join(all_labels))
+                #    print('')
+
             n += 1
         print("read " + str(n) + " tokens_tags lines from " + filename)
         print("tokens_tags contains " + str(len(tokens_tags)) + " entries")

@@ -105,26 +105,72 @@ def train(config, datasets, alpha_value):
 
 def test(config, datasets, classifier, suff_fold):
     test_acc = None
+    preds = classifier.predict(datasets.test_vectors)
+    test_acc = accuracy_score(datasets.test_labels, preds)
+    print("test_acc: %.4f" % (test_acc))
+
     if config.preds_file:
         preds_file = config.preds_file
         if suff_fold:
             preds_file = preds_file + suff_fold
         f = open(preds_file, 'w')
-        preds = classifier.predict(datasets.test_vectors)
         probs = classifier.predict_proba(datasets.test_vectors)
-        test_acc = accuracy_score(datasets.test_labels, preds)
         for i in range(len(datasets.test_vectors)):
             prob = '%.4f' % (max(probs[i]))
             f.write(datasets.test_words[i] + "\t" + datasets.test_labels[i] + "\t" + preds[i] + "\t" + prob + "\n")
-    else:
-        test_acc = classifier.score(datasets.test_vectors, datasets.test_labels)
-    print("test_acc: %.4f" % (test_acc))
-    return test_acc
 
+        test_acc_by_tag = test_breakdown_by_tag(datasets.test_labels, preds, datasets.test_words, '__')
+
+    return test_acc, test_acc_by_tag
+
+
+# split the test samples by tags and return an accuracy for each sample subset
+def test_breakdown_by_tag(y_true, y_pred, y_wordtags, delim):
+    assert(len(y_true)==len(y_pred)==len(y_wordtags))
+    subsets = {}
+    for i in range(len(y_true)):
+        _, tag = y_wordtags[i].split(delim, 1)
+        if tag not in subsets.keys():
+            # initialize with two empty arrays: one for y_true and one for y_pred:
+            subsets[tag] = []
+            subsets[tag].append(list())
+            subsets[tag].append(list())
+
+        subsets[tag][0].append(y_true[i])
+        subsets[tag][1].append(y_pred[i])
+
+    test_acc_by_tag = {}
+    for tag in subsets.keys():
+        # for each tag, store the respective accuracy and the number of samples with that tag
+        test_acc_by_tag[tag] = (accuracy_score(subsets[tag][0],subsets[tag][1]), len(subsets[tag][0]))
+
+    return test_acc_by_tag
+
+
+# expects an array of dictionaries: one dictionary per fold contains the accuracies broken down by tag
+def print_avg_scores_by_tag(scores_by_tag):
+    # gather all accuracies by tag
+    avg_scores_by_tag = {}
+    for tag in scores_by_tag[0].keys():
+        avg_scores_by_tag[tag] = []
+        avg_scores_by_tag[tag].append((scores_by_tag[0][tag][0]))
+        avg_scores_by_tag[tag].append(scores_by_tag[0][tag][1])
+
+    for f in range(1, len(scores_by_tag)):
+        for tag in scores_by_tag[f].keys():
+            avg_scores_by_tag[tag][0].append(scores_by_tag[f][tag][0])  # append accuracy
+            assert(avg_scores_by_tag[tag][1]==scores_by_tag[f][tag][1]) # make sure nb of samples matches
+
+    print("Breakdown by tag:")
+    for tag in sorted(avg_scores_by_tag.keys()):
+        #tag_acc = np.mean(avg_scores_by_tag[tag][0])
+        print("TAG=" + tag + "\t %.4f [std: %.4f] [#: %d]"
+              % (np.mean(avg_scores_by_tag[tag][0]), np.std(avg_scores_by_tag[tag][0]), avg_scores_by_tag[tag][1]))
 
 n_folds = config.n_folds
 datasets = [None] * n_folds
 scores = [0] * n_folds
+scores_by_tag = [0] * n_folds
 baseline_scores = [0] * n_folds
 for i in range(n_folds):
 
@@ -146,8 +192,10 @@ for i in range(n_folds):
             classifier = classifiers[int(best)]
         else:
             classifier, valid_acc = train(config, datasets[i], None)
-        scores[i] = test(config, datasets[i], classifier, suff_fold)
+        scores[i], scores_by_tag[i] = test(config, datasets[i], classifier, suff_fold)
 
 print("*** avg baseline test_acc: %.4f [std: %.4f] ***" % (np.mean(baseline_scores), np.std(baseline_scores)))
 print("*** avg classif  test_acc: %.4f [std: %.4f] ***" % (np.mean(scores), np.std(scores)))
 
+print("\n")
+print_avg_scores_by_tag(scores_by_tag)
