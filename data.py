@@ -26,6 +26,8 @@ class Data(object):
             self.label_dict = self.load_labels(config.label_dict)
 
         self.only_tags = None
+        if config.only_tags == ['all'] or config.only_tags == ['ALL']:
+            config.only_tags = None
         if config.only_tags:
             if not config.train_tags:
                 sys.exit("option --only_tags requires that tags are provided with the {train|valid|test}_tags options")
