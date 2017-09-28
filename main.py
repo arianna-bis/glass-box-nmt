@@ -119,6 +119,8 @@ def test(config, datasets, classifier, suff_fold):
             prob = '%.4f' % (max(probs[i]))
             f.write(datasets.test_words[i] + "\t" + datasets.test_labels[i] + "\t" + preds[i] + "\t" + prob + "\n")
 
+    test_acc_by_tag = {}
+    if config.test_tags:
         test_acc_by_tag = test_breakdown_by_tag(datasets.test_labels, preds, datasets.test_words, '__')
 
     return test_acc, test_acc_by_tag
@@ -133,8 +135,8 @@ def test_breakdown_by_tag(y_true, y_pred, y_wordtags, delim):
         if tag not in subsets.keys():
             # initialize with two empty arrays: one for y_true and one for y_pred:
             subsets[tag] = []
-            subsets[tag].append(list())
-            subsets[tag].append(list())
+            subsets[tag].append([])
+            subsets[tag].append([])
 
         subsets[tag][0].append(y_true[i])
         subsets[tag][1].append(y_pred[i])
@@ -153,7 +155,7 @@ def print_avg_scores_by_tag(scores_by_tag):
     avg_scores_by_tag = {}
     for tag in scores_by_tag[0].keys():
         avg_scores_by_tag[tag] = []
-        avg_scores_by_tag[tag].append((scores_by_tag[0][tag][0]))
+        avg_scores_by_tag[tag].append( [scores_by_tag[0][tag][0]] )
         avg_scores_by_tag[tag].append(scores_by_tag[0][tag][1])
 
     for f in range(1, len(scores_by_tag)):
@@ -198,4 +200,5 @@ print("*** avg baseline test_acc: %.4f [std: %.4f] ***" % (np.mean(baseline_scor
 print("*** avg classif  test_acc: %.4f [std: %.4f] ***" % (np.mean(scores), np.std(scores)))
 
 print("\n")
-print_avg_scores_by_tag(scores_by_tag)
+if config.test_tags:
+    print_avg_scores_by_tag(scores_by_tag)
