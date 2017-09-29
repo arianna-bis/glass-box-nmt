@@ -79,8 +79,16 @@ def run_baseline(config, datasets):
     #model = dummy.DummyClassifier(strategy='stratified')
     model = dummy.DummyClassifier(strategy='most_frequent')
     model.fit(datasets.train_vectors, datasets.train_labels)
-    test_acc = model.score(datasets.train_vectors, datasets.train_labels)
+    test_acc = model.score(datasets.test_vectors, datasets.test_labels)
     print("baseline(most_freq) test_acc: %.4f" % (test_acc))
+    # TODO test_acc_by_tag
+
+    #test_acc_by_tag = {}
+    #if config.test_tags:
+    #    test_acc_by_tag = test_breakdown_by_tag(datasets.test_labels, preds, datasets.test_words, '__')
+
+    #return test_acc, test_acc_by_tag
+
     return test_acc
 
 
@@ -156,18 +164,18 @@ def print_avg_scores_by_tag(scores_by_tag):
     for tag in scores_by_tag[0].keys():
         avg_scores_by_tag[tag] = []
         avg_scores_by_tag[tag].append( [scores_by_tag[0][tag][0]] )
-        avg_scores_by_tag[tag].append(scores_by_tag[0][tag][1])
+        avg_scores_by_tag[tag].append( [scores_by_tag[0][tag][1]] )
 
     for f in range(1, len(scores_by_tag)):
         for tag in scores_by_tag[f].keys():
             avg_scores_by_tag[tag][0].append(scores_by_tag[f][tag][0])  # append accuracy
-            assert(avg_scores_by_tag[tag][1]==scores_by_tag[f][tag][1]) # make sure nb of samples matches
+            avg_scores_by_tag[tag][1].append(scores_by_tag[f][tag][1])  # append nb samples
 
-    print("Breakdown by tag:")
+    print("avg test_acc breakdown by tag: (baseline TODO)")
     for tag in sorted(avg_scores_by_tag.keys()):
         #tag_acc = np.mean(avg_scores_by_tag[tag][0])
-        print("TAG=" + tag + "\t %.4f [std: %.4f] [#: %d]"
-              % (np.mean(avg_scores_by_tag[tag][0]), np.std(avg_scores_by_tag[tag][0]), avg_scores_by_tag[tag][1]))
+        print("TAG=" + tag + "\t %.4f [std: %.4f] [avg#: %.1f]"
+              % (np.mean(avg_scores_by_tag[tag][0]), np.std(avg_scores_by_tag[tag][0]), np.mean(avg_scores_by_tag[tag][1])))
 
 n_folds = config.n_folds
 datasets = [None] * n_folds
