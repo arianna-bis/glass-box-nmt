@@ -79,17 +79,16 @@ def run_baseline(config, datasets):
     #model = dummy.DummyClassifier(strategy='stratified')
     model = dummy.DummyClassifier(strategy='most_frequent')
     model.fit(datasets.train_vectors, datasets.train_labels)
-    test_acc = model.score(datasets.test_vectors, datasets.test_labels)
+    #test_acc = model.score(datasets.test_vectors, datasets.test_labels)
+    preds = model.predict(datasets.test_vectors)
+    test_acc = accuracy_score(datasets.test_labels, preds)
     print("baseline(most_freq) test_acc: %.4f" % (test_acc))
-    # TODO test_acc_by_tag
 
-    #test_acc_by_tag = {}
-    #if config.test_tags:
-    #    test_acc_by_tag = test_breakdown_by_tag(datasets.test_labels, preds, datasets.test_words, '__')
+    test_acc_by_tag = {}
+    if config.test_tags:
+        test_acc_by_tag = test_breakdown_by_tag(datasets.test_labels, preds, datasets.test_words, '__')
 
-    #return test_acc, test_acc_by_tag
-
-    return test_acc
+    return test_acc, test_acc_by_tag
 
 
 def train(config, datasets, alpha_value):
@@ -174,21 +173,22 @@ def print_avg_scores_by_tag(scores_by_tag):
     print("avg test_acc breakdown by tag: (baseline TODO)")
     for tag in sorted(avg_scores_by_tag.keys()):
         #tag_acc = np.mean(avg_scores_by_tag[tag][0])
-        print("TAG=" + tag + "\t %.4f [std: %.4f] [avg#: %.1f]"
+        print("TAG=" + tag + "\t %.4f [std: %.4f] [avg#samples: %.1f]"
               % (np.mean(avg_scores_by_tag[tag][0]), np.std(avg_scores_by_tag[tag][0]), np.mean(avg_scores_by_tag[tag][1])))
 
 n_folds = config.n_folds
 datasets = [None] * n_folds
 scores = [0] * n_folds
 scores_by_tag = [0] * n_folds
-baseline_scores = [0] * n_folds
+base_scores = [0] * n_folds
+base_scores_by_tag = [0] * n_folds
 for i in range(n_folds):
 
     suff_fold = None
     if n_folds > 1:
         suff_fold = '.fold'+str(i+1)    # filename suffixes are 1-numbered
     datasets[i] = data.Data(config, suff_fold)
-    baseline_scores[i] = run_baseline(config,datasets[i])
+    base_scores[i], base_scores_by_tag[i] = run_baseline(config, datasets[i])
     if not config.only_baseline:
         classifier = None
         if config.alphas:
@@ -204,9 +204,14 @@ for i in range(n_folds):
             classifier, valid_acc = train(config, datasets[i], None)
         scores[i], scores_by_tag[i] = test(config, datasets[i], classifier, suff_fold)
 
-print("*** avg baseline test_acc: %.4f [std: %.4f] ***" % (np.mean(baseline_scores), np.std(baseline_scores)))
-print("*** avg classif  test_acc: %.4f [std: %.4f] ***" % (np.mean(scores), np.std(scores)))
+print("*** avg baseline test_acc: %.4f [std: %.4f] ***" % (np.mean(base_scores), np.std(base_scores)))
+print("*** avg classif  test_acc: %.4f [std: %.4f] ***" % (np.mean(scores),      np.std(scores)))
 
-print("\n")
+print("\nBASELINE SCORES BY TAG:")
+if config.test_tags:
+    print_avg_scores_by_tag(base_scores_by_tag)
+
+print("\nCLASSIFIER SCORES BY TAG:")
 if config.test_tags:
     print_avg_scores_by_tag(scores_by_tag)
+
