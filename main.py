@@ -170,7 +170,7 @@ def print_avg_scores_by_tag(scores_by_tag):
             avg_scores_by_tag[tag][0].append(scores_by_tag[f][tag][0])  # append accuracy
             avg_scores_by_tag[tag][1].append(scores_by_tag[f][tag][1])  # append nb samples
 
-    print("avg test_acc breakdown by tag: (baseline TODO)")
+    print("avg test_acc breakdown by tag:")
     for tag in sorted(avg_scores_by_tag.keys()):
         #tag_acc = np.mean(avg_scores_by_tag[tag][0])
         print("TAG=" + tag + "\t %.4f [std: %.4f] [avg#samples: %.1f]"

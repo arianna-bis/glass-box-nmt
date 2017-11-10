@@ -20,6 +20,7 @@ config = parser.parse_args()
 
 def main():
     fc = FeaturesCombiner.Combiner(config)
+    n_empty_feats = 0
     for line in sys.stdin:
         tokens = line.rstrip().split(" ")
         line_out = ""
@@ -29,8 +30,12 @@ def main():
             # if len(tok.split("|"))>3:
             #    print("strange: " + tok)
             (word,pos,lem) = tok.split("|",2)
-            feats = fc.get_morphfeats(word,pos)
+            feats = fc.get_morphfeats(word,pos,lem)
+            if feats == "__":
+                n_empty_feats += 1
             line_out += (word+"|"+pos+"|"+lem+"|"+feats+" ")
         sys.stdout.write(line_out.rstrip() + "\n")
+    sys.stderr.write("num tokens with no morph features: " + str(n_empty_feats) + "\n")
+
 
 main()
