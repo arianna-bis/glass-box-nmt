@@ -22,6 +22,9 @@ parser.add_argument('--n_vectors', default=-1, type=int,
 # Labels from lexicon (e.g. lexicon only containing gender features)
 parser.add_argument('--label_dict', default=None, type=str,
                     help='file containing the dictionary of word labels')
+parser.add_argument('--freq_dict', default=None, type=str,
+                    help='file containing the frequency of each word (for acc. breakdown)')
+
 # OR
 # Labels from tagged corpus
 # format per line: word POS lemma feats
@@ -85,10 +88,13 @@ def run_baseline(config, datasets):
     print("baseline(most_freq) test_acc: %.4f" % (test_acc))
 
     test_acc_by_tag = {}
+    test_acc_by_freqbin = {}
     if config.test_tags:
         test_acc_by_tag = test_breakdown_by_tag(datasets.test_labels, preds, datasets.test_words, '__')
+    if config.freq_dict:
+        test_acc_by_freqbin = test_breakdown_by_freqbin(datasets.test_labels, preds, datasets.test_words, '__', datasets.freqbin_dict)
 
-    return test_acc, test_acc_by_tag
+    return test_acc, test_acc_by_tag, test_acc_by_freqbin
 
 
 def train(config, datasets, alpha_value):
@@ -127,10 +133,37 @@ def test(config, datasets, classifier, suff_fold):
             f.write(datasets.test_words[i] + "\t" + datasets.test_labels[i] + "\t" + preds[i] + "\t" + prob + "\n")
 
     test_acc_by_tag = {}
+    test_acc_by_freqbin = {}
     if config.test_tags:
         test_acc_by_tag = test_breakdown_by_tag(datasets.test_labels, preds, datasets.test_words, '__')
+    if config.freq_dict:
+        test_acc_by_freqbin = test_breakdown_by_freqbin(datasets.test_labels, preds, datasets.test_words, '__', datasets.freqbin_dict)
 
-    return test_acc, test_acc_by_tag
+    return test_acc, test_acc_by_tag, test_acc_by_freqbin
+
+# split the test samples by frequency bins and return an accuracy for each sample subset
+def test_breakdown_by_freqbin(y_true, y_pred, y_wordtags, delim, freqbin_dict):
+    assert(len(y_true)==len(y_pred)==len(y_wordtags))
+    subsets = {}
+    for i in range(len(y_true)):
+        word, _ = y_wordtags[i].split(delim, 1)
+        freqbin = freqbin_dict.get(word, "NAN")
+
+        if freqbin not in subsets.keys():
+            # initialize with two empty arrays: one for y_true and one for y_pred:
+            subsets[freqbin] = []
+            subsets[freqbin].append([])
+            subsets[freqbin].append([])
+
+        subsets[freqbin][0].append(y_true[i])
+        subsets[freqbin][1].append(y_pred[i])
+
+    test_acc_by_tag = {}
+    for freqbin in subsets.keys():
+        # for each tag, store the respective accuracy and the number of samples with that tag
+        test_acc_by_tag[freqbin] = (accuracy_score(subsets[freqbin][0],subsets[freqbin][1]), len(subsets[freqbin][0]))
+
+    return test_acc_by_tag
 
 
 # split the test samples by tags and return an accuracy for each sample subset
@@ -154,7 +187,6 @@ def test_breakdown_by_tag(y_true, y_pred, y_wordtags, delim):
         test_acc_by_tag[tag] = (accuracy_score(subsets[tag][0],subsets[tag][1]), len(subsets[tag][0]))
 
     return test_acc_by_tag
-
 
 # expects an array of dictionaries: one dictionary per fold contains the accuracies broken down by tag
 def print_avg_scores_by_tag(scores_by_tag):
@@ -180,15 +212,17 @@ n_folds = config.n_folds
 datasets = [None] * n_folds
 scores = [0] * n_folds
 scores_by_tag = [0] * n_folds
+scores_by_freqbin = [0] * n_folds
 base_scores = [0] * n_folds
 base_scores_by_tag = [0] * n_folds
+base_scores_by_freqbin = [0] * n_folds
 for i in range(n_folds):
 
     suff_fold = None
     if n_folds > 1:
         suff_fold = '.fold'+str(i+1)    # filename suffixes are 1-numbered
     datasets[i] = data.Data(config, suff_fold)
-    base_scores[i], base_scores_by_tag[i] = run_baseline(config, datasets[i])
+    base_scores[i], base_scores_by_tag[i], base_scores_by_freqbin[i]  = run_baseline(config, datasets[i])
     if not config.only_baseline:
         classifier = None
         if config.alphas:
@@ -202,7 +236,7 @@ for i in range(n_folds):
             classifier = classifiers[int(best)]
         else:
             classifier, valid_acc = train(config, datasets[i], None)
-        scores[i], scores_by_tag[i] = test(config, datasets[i], classifier, suff_fold)
+        scores[i], scores_by_tag[i], scores_by_freqbin[i] = test(config, datasets[i], classifier, suff_fold)
 
 print("*** avg baseline test_acc: %.4f [std: %.4f] ***" % (np.mean(base_scores), np.std(base_scores)))
 print("*** avg classif  test_acc: %.4f [std: %.4f] ***" % (np.mean(scores),      np.std(scores)))
@@ -214,4 +248,13 @@ if config.test_tags:
 print("\nCLASSIFIER SCORES BY TAG:")
 if config.test_tags:
     print_avg_scores_by_tag(scores_by_tag)
+
+
+print("\nBASELINE SCORES BY FREQ-BIN:")
+if config.freq_dict:
+    print_avg_scores_by_tag(base_scores_by_freqbin)
+
+print("\nCLASSIFIER SCORES BY FREQ-BIN:")
+if config.freq_dict:
+    print_avg_scores_by_tag(scores_by_freqbin)
 

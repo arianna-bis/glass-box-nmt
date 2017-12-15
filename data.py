@@ -7,6 +7,13 @@ def fopen(filename, mode='r'):
         return gzip.open(filename, mode)
     return open(filename, mode)
 
+def freq_to_freqbin(freq):
+    maxFreqs = [100,500,1000,2000,3000,5000]
+    for maxFreq in maxFreqs:
+        if freq < maxFreq:
+            return str(maxFreq)
+    return '>' + str(maxFreqs[-1])
+
 class Data(object):
 
     """Data loader."""
@@ -15,11 +22,16 @@ class Data(object):
         self.unk = "<unk>"
         self.eos = "EOS"
 
+
         if not config.label_dict and not config.train_tags:
             sys.exit("Labels must be provided by --label_dict or --train_tags")
 
         if config.train_tags and not config.labels:
             sys.exit("You must specify which labels to predict when using --train_tags")
+
+        self.freqbin_dict = None
+        if config.freq_dict:
+            self.freqbin_dict = self.load_freqbins(config.freq_dict)
 
         self.label_dict = None
         if config.label_dict:
@@ -110,7 +122,7 @@ class Data(object):
             if label:
                 labels.append(label)
                 words.append(word)
-                vector = map(float, fields[1:])
+                vector = list(map(float, fields[1:]))
                 if n_vectors == 0:
                     n_features = len(vector)
                 else:
@@ -128,6 +140,20 @@ class Data(object):
         labels = np.transpose(np.array(labels))
         return words, vectors, labels, n_vectors
 
+    # expected format: word TAB frequency
+    # bin frequencies and load into hash (use for word types)
+    def load_freqbins(self, filename):
+        f = fopen(filename, 'r')
+        freqbin_dict = {}
+        n = 0
+        for line in f:
+            fields = line.rstrip().split("\t", 1)
+            freqbin_dict[fields[0]] = freq_to_freqbin(int(fields[1]))
+            n += 1
+        print("read " + str(n) + " freq_dict lines from " + filename)
+        print("freq_dict contains " + str(len(freqbin_dict)) + " entries")
+        return freqbin_dict
+
     # expected format: label SPACE word
     # loads into hash (use for word types)
     def load_labels(self, filename):
@@ -141,6 +167,7 @@ class Data(object):
         print("read " + str(n) + " label_dict lines from " + filename)
         print("label_dict contains " + str(len(label_dict)) + " entries")
         return label_dict
+
 
     # expected format: word SPACE tag SPACE lemma SPACE labels
     # loads word,tags,labels into 2-dim array (use for tokens)
