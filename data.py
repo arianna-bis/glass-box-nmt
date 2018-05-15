@@ -8,7 +8,7 @@ def fopen(filename, mode='r'):
     return open(filename, mode)
 
 def freq_to_freqbin(freq):
-    maxFreqs = [100,500,1000,2000,3000,5000]
+    maxFreqs = [100,500,1000,2000,3000,5000,10000]
     for maxFreq in maxFreqs:
         if freq < maxFreq:
             return str(maxFreq)
