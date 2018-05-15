@@ -21,7 +21,9 @@ class Data(object):
 
         self.unk = "<unk>"
         self.eos = "EOS"
-
+        self.ltag1 = "<2it>"
+        self.ltag2 = "<2de>"
+        self.ltag3 = "<2en>"
 
         if not config.label_dict and not config.train_tags:
             sys.exit("Labels must be provided by --label_dict or --train_tags")
@@ -97,7 +99,9 @@ class Data(object):
         for line in f:
             n_lines += 1
             line = line.rstrip()
-            if line.startswith(self.eos) or line.startswith(self.unk):
+            if line.startswith(self.eos) \
+                    or line.startswith(self.ltag1) or line.startswith(self.ltag2) or line.startswith(self.ltag3) \
+                    or line.startswith(self.unk):
                 continue
             fields = line.split()
             word = fields[0]
